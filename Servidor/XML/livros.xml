@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<livros xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="Servidor/Soap/XSD/livros_schema.xsd"><livro><nome>a</nome><autor>a</autor><preco>2.0</preco></livro><livro><nome>a</nome><autor>a</autor><preco>2.0</preco></livro><livro><nome>b</nome><autor>c</autor><preco>5.0</preco></livro></livros>

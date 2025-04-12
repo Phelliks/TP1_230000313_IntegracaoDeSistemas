@@ -1,74 +1,132 @@
-from flask import Flask, request, Response
-import xmlschema
+# soap_server.py
+
+import os
 import xml.etree.ElementTree as ET
+from flask import Flask, request, Response
 
 app = Flask(__name__)
 
-# Carregar o esquema XSD para validação
-xsd_path = "./Servidor/Soap/schema.xsd"
-try:
-    xsd_schema = xmlschema.XMLSchema(xsd_path)
-except Exception as ex:
-    print(f"Erro ao carregar o XSD: {ex}")
-    exit(1)
+# Base de dados em memória para SOAP (opcional)
+livros = []
 
-def calcular_operacao(operacao, num1, num2):
-    """
-    Realiza a operação aritmética especificada.
-    """
-    operacao = operacao.lower().strip()
-    if operacao == "soma":
-        return num1 + num2
-    elif operacao == "subtracao":
-        return num1 - num2
-    elif operacao == "multiplicacao":
-        return num1 * num2
-    elif operacao == "divisao":
-        if num2 == 0:
-            raise ZeroDivisionError("Divisão por zero não permitida!")
-        return num1 / num2
-    else:
-        raise ValueError("Operação inválida! Use: soma, subtracao, multiplicacao ou divisao.")
+# Caminho do arquivo XML para persistência
+XML_FILE_PATH = os.path.join("Servidor", "Soap", "XML", "livros.xml")
+
+def inicializar_xml():
+    """Cria o diretório e o arquivo XML, se ainda não existirem."""
+    xml_dir = os.path.dirname(XML_FILE_PATH)
+    os.makedirs(xml_dir, exist_ok=True)
+    if not os.path.exists(XML_FILE_PATH):
+        root = ET.Element("livros")
+        tree = ET.ElementTree(root)
+        tree.write(XML_FILE_PATH, encoding="utf-8", xml_declaration=True)
+
+def adicionar_livro_xml(nome, autor, preco):
+    """Adiciona um livro ao arquivo XML."""
+    inicializar_xml()
+    tree = ET.parse(XML_FILE_PATH)
+    root = tree.getroot()
+    livro_elem = ET.Element("livro")
+    ET.SubElement(livro_elem, "nome").text = nome
+    ET.SubElement(livro_elem, "autor").text = autor
+    ET.SubElement(livro_elem, "preco").text = str(preco)
+    root.append(livro_elem)
+    tree.write(XML_FILE_PATH, encoding="utf-8", xml_declaration=True)
+
+def atualizar_livro_xml(nome, novo_preco):
+    """Atualiza o preço de um livro identificado pelo nome no arquivo XML."""
+    inicializar_xml()
+    tree = ET.parse(XML_FILE_PATH)
+    root = tree.getroot()
+    updated = False
+    for livro in root.findall("livro"):
+        if livro.findtext("nome", "").strip().lower() == nome.strip().lower():
+            livro.find("preco").text = str(novo_preco)
+            updated = True
+            break
+    if updated:
+        tree.write(XML_FILE_PATH, encoding="utf-8", xml_declaration=True)
+    return updated
 
 @app.route('/soap', methods=['POST'])
 def soap_service():
     xml_request = request.data.decode('utf-8')
-    
     try:
-        # Validação: Se o XML não for válido, is_valid() retornará False
-        if not xsd_schema.is_valid(xml_request):
-            validation_errors = "\n".join([str(e) for e in xsd_schema.iter_errors(xml_request)])
-            raise ValueError(f"Erro na validação XSD:\n{validation_errors}")
+        root_req = ET.fromstring(xml_request)
+        body = root_req.find("Body")
+        if body is None:
+            raise ValueError("Elemento Body não encontrado.")
 
-        # Convertendo o XML usando o ElementTree
-        root = ET.fromstring(xml_request)
-        # Consideramos que o XML tem a estrutura: Envelope -> Body -> OperacaoRequest -> (operacao, numero1, numero2)
-        # (Sem namespaces – caso contrário, é necessário tratar os namespaces.)
-        operacao_req = root.find('./Body/OperacaoRequest')
-        if operacao_req is None:
-            raise ValueError("OperacaoRequest não encontrado.")
-
-        operacao = operacao_req.findtext("operacao")
-        numero1 = int(operacao_req.findtext("numero1"))
-        numero2 = int(operacao_req.findtext("numero2"))
-
-        # Efetua a operação aritmética
-        resultado = calcular_operacao(operacao, numero1, numero2)
-
-        # Constrói a resposta SOAP
-        response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+        # Inserção: <LivroRequest>
+        livro_req = body.find("LivroRequest")
+        if livro_req is not None:
+            nome = livro_req.findtext("nome")
+            autor = livro_req.findtext("autor")
+            preco_text = livro_req.findtext("preco")
+            if not nome or not autor or not preco_text:
+                raise ValueError("Campos obrigatórios ausentes para inserção.")
+            preco = float(preco_text)
+            livros.append({"nome": nome, "autor": autor, "preco": preco})
+            adicionar_livro_xml(nome, autor, preco)
+            response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
-    <OperacaoResponse>
-      <resultado>{resultado}</resultado>
-    </OperacaoResponse>
+    <LivroResponse>
+      <mensagem>Livro inserido com sucesso!</mensagem>
+    </LivroResponse>
   </soapenv:Body>
 </soapenv:Envelope>"""
-        return Response(response_xml, mimetype='text/xml')
+            return Response(response_xml, mimetype="text/xml")
 
+        # Consulta: <LivroConsultaRequest>
+        livro_consulta = body.find("LivroConsultaRequest")
+        if livro_consulta is not None:
+            nome_query = livro_consulta.findtext("nome")
+            if not nome_query:
+                raise ValueError("Campo 'nome' ausente na consulta.")
+            info = None
+            for livro in livros:
+                if livro.get("nome", "").strip().lower() == nome_query.strip().lower():
+                    info = livro
+                    break
+            if info is None:
+                raise ValueError("Livro não encontrado.")
+            response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+  <soapenv:Body>
+    <LivroConsultaResponse>
+      <nome>{info.get('nome')}</nome>
+      <autor>{info.get('autor')}</autor>
+      <preco>{info.get('preco')}</preco>
+    </LivroConsultaResponse>
+  </soapenv:Body>
+</soapenv:Envelope>"""
+            return Response(response_xml, mimetype="text/xml")
+
+        # Atualização: <LivroUpdateRequest>
+        livro_update = body.find("LivroUpdateRequest")
+        if livro_update is not None:
+            nome = livro_update.findtext("nome")
+            novo_preco_text = livro_update.findtext("preco")
+            if not nome or not novo_preco_text:
+                raise ValueError("Dados insuficientes para atualização via SOAP.")
+            novo_preco = float(novo_preco_text)
+            if atualizar_livro_xml(nome, novo_preco):
+                response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+  <soapenv:Body>
+    <LivroUpdateResponse>
+      <mensagem>Livro atualizado com sucesso!</mensagem>
+    </LivroUpdateResponse>
+  </soapenv:Body>
+</soapenv:Envelope>"""
+                return Response(response_xml, mimetype="text/xml")
+            else:
+                raise ValueError("Livro não encontrado para atualização.")
+
+        raise ValueError("Operação não reconhecida. Use LivroRequest para inserção, LivroConsultaRequest para consulta ou LivroUpdateRequest para atualização.")
     except Exception as e:
-        # Cria uma resposta SOAP com o Fault para o erro
-        fault_response = f"""<?xml version="1.0" encoding="UTF-8"?>
+        fault_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
     <soapenv:Fault>
@@ -77,8 +135,8 @@ def soap_service():
     </soapenv:Fault>
   </soapenv:Body>
 </soapenv:Envelope>"""
-        return Response(fault_response, status=400, mimetype='text/xml')
+        return Response(fault_xml, status=400, mimetype="text/xml")
 
 if __name__ == '__main__':
-    print("Servidor SOAP avançado rodando em http://127.0.0.1:5000/soap")
-    app.run(host='127.0.0.1', port=5000)
+    print("Servidor SOAP rodando em http://127.0.0.1:5000/soap")
+    app.run(host="127.0.0.1", port=5000, debug=True)

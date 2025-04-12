@@ -1,2 +1,6 @@
+requests
+jsonschema
+jsonpath-ng
 flask
+flask-restful
 xmlschema

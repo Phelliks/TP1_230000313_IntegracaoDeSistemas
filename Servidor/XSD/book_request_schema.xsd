@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Este XSD valida a mensagem SOAP recebida que contém os dados do livro -->
+<!-- Valida a mensagem SOAP que contém dados para inserção de um livro -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="Envelope">
     <xs:complexType>

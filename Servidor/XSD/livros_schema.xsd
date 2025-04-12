@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Este XSD define a estrutura do arquivo XML que armazena os livros -->
+<!-- Define a estrutura do arquivo XML que armazena os livros -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="livros">
     <xs:complexType>

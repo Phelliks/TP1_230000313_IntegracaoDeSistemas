@@ -12,6 +12,7 @@ SOAP_URL = "http://127.0.0.1:5000/soap"
 REST_URL = "http://127.0.0.1:5001/REST"
 GRPC_HOST = "localhost"
 GRPC_PORT = 50051
+GRAPHQL_URL = "http://127.0.0.1:5002/graphql"
 
 # Função para inserir livro via REST
 def enviar_livro():
@@ -95,16 +96,51 @@ def procurar_livro():
             stub = livro_pb2_grpc.LivroServiceStub(channel)
             request = livro_pb2.LivroRequest(nome=nome)
             response = stub.ProcurarLivro(request)
-            
+
             resultado = f"Nome: {response.nome}\nAutor: {response.autor}\nPreço: {response.preco:.2f}€"
             messagebox.showinfo("Livro Encontrado", resultado)
 
     except grpc.RpcError as e:
         messagebox.showerror("Erro gRPC", f"Erro ao procurar livro: {e.details() if hasattr(e, 'details') else str(e)}")
 
+# Função para eliminar livro via GraphQL
+def eliminar_livro():
+    nome = entry_eliminar_nome.get().strip()
+    if not nome:
+        messagebox.showwarning("Entrada Inválida", "Introduza o nome do livro a eliminar.")
+        return
+
+    query = {
+        "query": f"""
+        mutation {{
+            eliminarLivro(nome: \"{nome}\") {{
+                sucesso
+                mensagem
+            }}
+        }}
+        """
+    }
+
+    try:
+        resposta = requests.post(GRAPHQL_URL, json=query)
+        dados = resposta.json()
+
+        if "errors" in dados:
+            messagebox.showerror("Erro", f"Erro do servidor GraphQL: {dados['errors'][0]['message']}")
+            return
+
+        resultado = dados["data"]["eliminarLivro"]
+        if resultado["sucesso"]:
+            messagebox.showinfo("Sucesso", resultado["mensagem"])
+        else:
+            messagebox.showwarning("Não Encontrado", resultado["mensagem"])
+
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao comunicar com o servidor GraphQL: {str(e)}")
+
 # Interface Gráfica
 root = tk.Tk()
-root.title("Cliente Livros - REST, SOAP e gRPC")
+root.title("Cliente Livros - REST, SOAP, gRPC e GraphQL")
 
 notebook = ttk.Notebook(root)
 notebook.pack(padx=10, pady=10, expand=True, fill="both")
@@ -154,10 +190,10 @@ entry_mod_preco.grid(row=2, column=1, pady=2)
 ttk.Button(frame_mod, text="Modificar Livro", command=modificar_livro).grid(row=3, columnspan=2, pady=5)
 
 # Aba Procurar
-aba_procurar = ttk.Frame(notebook)
-notebook.add(aba_procurar, text="Procurar Livro (gRPC)")
+tt_frame = ttk.Frame(notebook)
+notebook.add(tt_frame, text="Procurar Livro (gRPC)")
 
-frame_proc = ttk.Frame(aba_procurar)
+frame_proc = ttk.Frame(tt_frame)
 frame_proc.pack(padx=10, pady=10, fill="x")
 
 entry_procura_nome = ttk.Entry(frame_proc)
@@ -166,5 +202,19 @@ ttk.Label(frame_proc, text="Nome do Livro:").grid(row=0, column=0, sticky="w")
 entry_procura_nome.grid(row=0, column=1, pady=2)
 
 ttk.Button(frame_proc, text="Procurar", command=procurar_livro).grid(row=1, columnspan=2, pady=5)
+
+# Aba Eliminar
+aba_eliminar = ttk.Frame(notebook)
+notebook.add(aba_eliminar, text="Eliminar Livro (GraphQL)")
+
+frame_eli = ttk.Frame(aba_eliminar)
+frame_eli.pack(padx=10, pady=10, fill="x")
+
+entry_eliminar_nome = ttk.Entry(frame_eli)
+
+ttk.Label(frame_eli, text="Nome do Livro:").grid(row=0, column=0, sticky="w")
+entry_eliminar_nome.grid(row=0, column=1, pady=2)
+
+ttk.Button(frame_eli, text="Eliminar", command=eliminar_livro).grid(row=1, columnspan=2, pady=5)
 
 root.mainloop()

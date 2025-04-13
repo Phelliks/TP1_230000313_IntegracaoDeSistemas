@@ -4,3 +4,5 @@ jsonpath-ng
 flask
 flask-restful
 xmlschema
+grpcio
+grpcio-tools

@@ -1,16 +1,11 @@
-# soap_server.py
-
 import os
 import xml.etree.ElementTree as ET
 from flask import Flask, request, Response
 
 app = Flask(__name__)
 
-# Base de dados em memória para SOAP (opcional)
-livros = []
-
 # Caminho do arquivo XML para persistência
-XML_FILE_PATH = os.path.join("Servidor", "Soap", "XML", "livros.xml")
+XML_FILE_PATH = os.path.join("Servidor", "XML", "livros.xml")
 
 def inicializar_xml():
     """Cria o diretório e o arquivo XML, se ainda não existirem."""
@@ -21,27 +16,21 @@ def inicializar_xml():
         tree = ET.ElementTree(root)
         tree.write(XML_FILE_PATH, encoding="utf-8", xml_declaration=True)
 
-def adicionar_livro_xml(nome, autor, preco):
-    """Adiciona um livro ao arquivo XML."""
-    inicializar_xml()
-    tree = ET.parse(XML_FILE_PATH)
-    root = tree.getroot()
-    livro_elem = ET.Element("livro")
-    ET.SubElement(livro_elem, "nome").text = nome
-    ET.SubElement(livro_elem, "autor").text = autor
-    ET.SubElement(livro_elem, "preco").text = str(preco)
-    root.append(livro_elem)
-    tree.write(XML_FILE_PATH, encoding="utf-8", xml_declaration=True)
-
-def atualizar_livro_xml(nome, novo_preco):
-    """Atualiza o preço de um livro identificado pelo nome no arquivo XML."""
+def atualizar_livro_xml(nome, novo_autor=None, novo_preco=None):
+    """
+    Atualiza o autor e/ou preço do livro identificado pelo nome no arquivo XML.
+    Retorna True se o livro for encontrado.
+    """
     inicializar_xml()
     tree = ET.parse(XML_FILE_PATH)
     root = tree.getroot()
     updated = False
     for livro in root.findall("livro"):
         if livro.findtext("nome", "").strip().lower() == nome.strip().lower():
-            livro.find("preco").text = str(novo_preco)
+            if novo_autor:
+                livro.find("autor").text = novo_autor
+            if novo_preco is not None:
+                livro.find("preco").text = str(novo_preco)
             updated = True
             break
     if updated:
@@ -50,6 +39,10 @@ def atualizar_livro_xml(nome, novo_preco):
 
 @app.route('/soap', methods=['POST'])
 def soap_service():
+    """
+    Serviço SOAP para modificar livros no XML.
+    Utiliza <LivroUpdateRequest> para atualizar autor e/ou preço de um livro.
+    """
     xml_request = request.data.decode('utf-8')
     try:
         root_req = ET.fromstring(xml_request)
@@ -57,61 +50,16 @@ def soap_service():
         if body is None:
             raise ValueError("Elemento Body não encontrado.")
 
-        # Inserção: <LivroRequest>
-        livro_req = body.find("LivroRequest")
-        if livro_req is not None:
-            nome = livro_req.findtext("nome")
-            autor = livro_req.findtext("autor")
-            preco_text = livro_req.findtext("preco")
-            if not nome or not autor or not preco_text:
-                raise ValueError("Campos obrigatórios ausentes para inserção.")
-            preco = float(preco_text)
-            livros.append({"nome": nome, "autor": autor, "preco": preco})
-            adicionar_livro_xml(nome, autor, preco)
-            response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-  <soapenv:Body>
-    <LivroResponse>
-      <mensagem>Livro inserido com sucesso!</mensagem>
-    </LivroResponse>
-  </soapenv:Body>
-</soapenv:Envelope>"""
-            return Response(response_xml, mimetype="text/xml")
-
-        # Consulta: <LivroConsultaRequest>
-        livro_consulta = body.find("LivroConsultaRequest")
-        if livro_consulta is not None:
-            nome_query = livro_consulta.findtext("nome")
-            if not nome_query:
-                raise ValueError("Campo 'nome' ausente na consulta.")
-            info = None
-            for livro in livros:
-                if livro.get("nome", "").strip().lower() == nome_query.strip().lower():
-                    info = livro
-                    break
-            if info is None:
-                raise ValueError("Livro não encontrado.")
-            response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-  <soapenv:Body>
-    <LivroConsultaResponse>
-      <nome>{info.get('nome')}</nome>
-      <autor>{info.get('autor')}</autor>
-      <preco>{info.get('preco')}</preco>
-    </LivroConsultaResponse>
-  </soapenv:Body>
-</soapenv:Envelope>"""
-            return Response(response_xml, mimetype="text/xml")
-
         # Atualização: <LivroUpdateRequest>
         livro_update = body.find("LivroUpdateRequest")
         if livro_update is not None:
             nome = livro_update.findtext("nome")
+            novo_autor = livro_update.findtext("autor")
             novo_preco_text = livro_update.findtext("preco")
-            if not nome or not novo_preco_text:
+            novo_preco = float(novo_preco_text) if novo_preco_text else None
+            if not nome or (not novo_autor and novo_preco is None):
                 raise ValueError("Dados insuficientes para atualização via SOAP.")
-            novo_preco = float(novo_preco_text)
-            if atualizar_livro_xml(nome, novo_preco):
+            if atualizar_livro_xml(nome, novo_autor, novo_preco):
                 response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
@@ -123,8 +71,8 @@ def soap_service():
                 return Response(response_xml, mimetype="text/xml")
             else:
                 raise ValueError("Livro não encontrado para atualização.")
-
-        raise ValueError("Operação não reconhecida. Use LivroRequest para inserção, LivroConsultaRequest para consulta ou LivroUpdateRequest para atualização.")
+        else:
+            raise ValueError("Operação não reconhecida. Use LivroUpdateRequest para atualizar.")
     except Exception as e:
         fault_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">

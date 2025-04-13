@@ -19,7 +19,7 @@ book_schema = {
 }
 
 # Caminho do arquivo XML para persistência
-XML_FILE_PATH = os.path.join("Servidor", "XML", "livros.xml")
+XML_FILE_PATH = XML_FILE_PATH = "/data/livros.xml"
 
 def inicializar_xml():
     """Cria o diretório e o arquivo XML com a raiz <livros> se não existirem."""
@@ -62,5 +62,5 @@ class LivroResource(Resource):
 api.add_resource(LivroResource, '/REST')
 
 if __name__ == '__main__':
-    print("Servidor REST rodando em http://127.0.0.1:5001/REST")
-    app.run(host="127.0.0.1", port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5000)
+

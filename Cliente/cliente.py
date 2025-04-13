@@ -8,11 +8,11 @@ import livro_pb2
 import livro_pb2_grpc
 
 # Configuração dos endpoints
-SOAP_URL = "http://127.0.0.1:5000/soap"
-REST_URL = "http://127.0.0.1:5001/REST"
+SOAP_URL = "http://localhost:8000/soap"
+REST_URL = "http://localhost:5001/REST"
 GRPC_HOST = "localhost"
 GRPC_PORT = 50051
-GRAPHQL_URL = "http://127.0.0.1:5002/graphql"
+GRAPHQL_URL = "http://localhost:4000/graphql"
 
 # Função para inserir livro via REST
 def enviar_livro():

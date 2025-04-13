@@ -9,7 +9,7 @@ class LivroServiceServicer(livro_pb2_grpc.LivroServiceServicer):
         nome_procurado = request.nome.strip().lower()
 
         try:
-            tree = ET.parse("Servidor/XML/livros.xml")
+            tree = ET.parse("/data/livros.xml")
             root = tree.getroot()
 
             for livro in root.findall("livro"):
@@ -31,8 +31,7 @@ class LivroServiceServicer(livro_pb2_grpc.LivroServiceServicer):
 def servir():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     livro_pb2_grpc.add_LivroServiceServicer_to_server(LivroServiceServicer(), server)
-    server.add_insecure_port("[::]:50051")
-    print("Servidor gRPC a correr em localhost:50051...")
+    server.add_insecure_port('[::]:50051')
     server.start()
     server.wait_for_termination()
 

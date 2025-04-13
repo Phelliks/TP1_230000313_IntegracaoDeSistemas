@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  rest:
+    build:
+      context: ./Servidor
+      dockerfile: Rest/Dockerfile
+    image: phelliks/rest:1.0
+    container_name: rest
+    volumes:
+      - livros_data:/data
+    ports:
+      - "5001:5000"
+    networks:
+      - backend
+
+  soap:
+    build:
+      context: ./Servidor
+      dockerfile: Soap/Dockerfile
+    image: phelliks/soap:1.0
+    container_name: soap
+    volumes:
+      - livros_data:/data
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
+
+  grpc:
+    build:
+      context: ./Servidor
+      dockerfile: gRPC/Dockerfile
+    image: phelliks/grpc:1.0
+    container_name: grpc
+    volumes:
+      - livros_data:/data
+    ports:
+      - "50051:50051"
+    networks:
+      - backend
+
+  graphql:
+    build:
+      context: ./Servidor
+      dockerfile: graphQL/Dockerfile
+    image: phelliks/graphql:1.0
+    container_name: graphql
+    volumes:
+      - livros_data:/data
+    ports:
+      - "4000:4000"
+    networks:
+      - backend
+
+volumes:
+  livros_data:
+
+networks:
+  backend:
+    driver: bridge

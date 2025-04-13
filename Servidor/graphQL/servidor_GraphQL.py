@@ -3,7 +3,7 @@ from flask import Flask
 from flask_graphql import GraphQLView
 import graphene
 
-CAMINHO_XML = "Servidor/XML/livros.xml"
+CAMINHO_XML = "/data/livros.xml"
 
 class Resultado(graphene.ObjectType):
     sucesso = graphene.Boolean()
@@ -52,4 +52,4 @@ app.add_url_rule(
 )
 
 if __name__ == "__main__":
-    app.run(port=5002)
+    app.run(host='0.0.0.0', port=4000)

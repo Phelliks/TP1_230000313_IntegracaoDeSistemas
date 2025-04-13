@@ -5,7 +5,7 @@ from flask import Flask, request, Response
 app = Flask(__name__)
 
 # Caminho do arquivo XML para persistência
-XML_FILE_PATH = os.path.join("Servidor", "XML", "livros.xml")
+XML_FILE_PATH = "/data/livros.xml"
 
 def inicializar_xml():
     """Cria o diretório e o arquivo XML, se ainda não existirem."""
@@ -86,5 +86,4 @@ def soap_service():
         return Response(fault_xml, status=400, mimetype="text/xml")
 
 if __name__ == '__main__':
-    print("Servidor SOAP rodando em http://127.0.0.1:5000/soap")
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=True)

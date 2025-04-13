@@ -1,43 +1,40 @@
 from concurrent import futures
 import grpc
-import time
+import livro_pb2
+import livro_pb2_grpc
+import xml.etree.ElementTree as ET
 
-import books_pb2
-import books_pb2_grpc
+class LivroServiceServicer(livro_pb2_grpc.LivroServiceServicer):
+    def ProcurarLivro(self, request, context):
+        nome_procurado = request.nome.strip().lower()
 
-# Simulação de "base de dados" de livros. 
-# Em uma implementação real, você poderia ler do arquivo XML que os outros serviços atualizam.
-BOOKS = [
-    books_pb2.BookResponse(nome="O Alquimista", autor="Paulo Coelho", preco=29.90),
-    books_pb2.BookResponse(nome="Dom Casmurro", autor="Machado de Assis", preco=45.0)
-]
+        try:
+            tree = ET.parse("Servidor/XML/livros.xml")
+            root = tree.getroot()
 
-class BookServiceServicer(books_pb2_grpc.BookServiceServicer):
-    def GetBook(self, request, context):
-        # Busca o livro pela correspondência do nome (case insensitive)
-        for book in BOOKS:
-            if book.nome.lower() == request.nome.lower():
-                return book
-        context.set_code(grpc.StatusCode.NOT_FOUND)
-        context.set_details("Livro não encontrado")
-        return books_pb2.BookResponse()
+            for livro in root.findall("livro"):
+                nome = livro.find("nome").text.strip()
+                if nome.lower() == nome_procurado:
+                    autor = livro.find("autor").text.strip()
+                    preco = float(livro.find("preco").text.strip())
+                    return livro_pb2.LivroResponse(nome=nome, autor=autor, preco=preco)
 
-    def ListBooks(self, request, context):
-        # Método de streaming: envia todos os livros
-        for book in BOOKS:
-            yield book
+            context.set_code(grpc.StatusCode.NOT_FOUND)
+            context.set_details("Livro não encontrado.")
+            return livro_pb2.LivroResponse()
 
-def serve():
+        except Exception as e:
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Erro ao ler o XML: {str(e)}")
+            return livro_pb2.LivroResponse()
+
+def servir():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    books_pb2_grpc.add_BookServiceServicer_to_server(BookServiceServicer(), server)
-    server.add_insecure_port('[::]:50053')
+    livro_pb2_grpc.add_LivroServiceServicer_to_server(LivroServiceServicer(), server)
+    server.add_insecure_port("[::]:50051")
+    print("Servidor gRPC a correr em localhost:50051...")
     server.start()
-    print("gRPC Server rodando na porta 50053")
-    try:
-        while True:
-            time.sleep(86400)
-    except KeyboardInterrupt:
-        server.stop(0)
+    server.wait_for_termination()
 
-if __name__ == '__main__':
-    serve()
+if __name__ == "__main__":
+    servir()

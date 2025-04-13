@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+service LivroService {
+  rpc ProcurarLivro (LivroRequest) returns (LivroResponse);
+}
+
+message LivroRequest {
+  string nome = 1;
+}
+
+message LivroResponse {
+  string nome = 1;
+  string autor = 2;
+  double preco = 3;
+}

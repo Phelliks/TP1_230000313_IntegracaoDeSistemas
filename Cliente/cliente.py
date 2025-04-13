@@ -3,10 +3,15 @@ from tkinter import ttk, messagebox
 import requests
 import json
 import xml.etree.ElementTree as ET
+import grpc
+import livro_pb2
+import livro_pb2_grpc
 
 # Configuração dos endpoints
 SOAP_URL = "http://127.0.0.1:5000/soap"
 REST_URL = "http://127.0.0.1:5001/REST"
+GRPC_HOST = "localhost"
+GRPC_PORT = 50051
 
 # Função para inserir livro via REST
 def enviar_livro():
@@ -78,9 +83,28 @@ def modificar_livro():
     except Exception as e:
         messagebox.showerror("Erro", f"Erro ao comunicar com o servidor SOAP: {str(e)}")
 
+# Função para procurar livro via gRPC
+def procurar_livro():
+    nome = entry_procura_nome.get().strip()
+    if not nome:
+        messagebox.showwarning("Entrada Inválida", "Introduza o nome do livro a procurar.")
+        return
+
+    try:
+        with grpc.insecure_channel(f"{GRPC_HOST}:{GRPC_PORT}") as channel:
+            stub = livro_pb2_grpc.LivroServiceStub(channel)
+            request = livro_pb2.LivroRequest(nome=nome)
+            response = stub.ProcurarLivro(request)
+            
+            resultado = f"Nome: {response.nome}\nAutor: {response.autor}\nPreço: {response.preco:.2f}€"
+            messagebox.showinfo("Livro Encontrado", resultado)
+
+    except grpc.RpcError as e:
+        messagebox.showerror("Erro gRPC", f"Erro ao procurar livro: {e.details() if hasattr(e, 'details') else str(e)}")
+
 # Interface Gráfica
 root = tk.Tk()
-root.title("Cliente Livros - REST e SOAP")
+root.title("Cliente Livros - REST, SOAP e gRPC")
 
 notebook = ttk.Notebook(root)
 notebook.pack(padx=10, pady=10, expand=True, fill="both")
@@ -128,5 +152,19 @@ ttk.Label(frame_mod, text="Novo Preço:").grid(row=2, column=0, sticky="w")
 entry_mod_preco.grid(row=2, column=1, pady=2)
 
 ttk.Button(frame_mod, text="Modificar Livro", command=modificar_livro).grid(row=3, columnspan=2, pady=5)
+
+# Aba Procurar
+aba_procurar = ttk.Frame(notebook)
+notebook.add(aba_procurar, text="Procurar Livro (gRPC)")
+
+frame_proc = ttk.Frame(aba_procurar)
+frame_proc.pack(padx=10, pady=10, fill="x")
+
+entry_procura_nome = ttk.Entry(frame_proc)
+
+ttk.Label(frame_proc, text="Nome do Livro:").grid(row=0, column=0, sticky="w")
+entry_procura_nome.grid(row=0, column=1, pady=2)
+
+ttk.Button(frame_proc, text="Procurar", command=procurar_livro).grid(row=1, columnspan=2, pady=5)
 
 root.mainloop()

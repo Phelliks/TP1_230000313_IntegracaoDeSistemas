@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir flask flask-restful requests
+RUN pip install --no-cache-dir flask flask-restful requests jsonschema
 
 EXPOSE 5001
 

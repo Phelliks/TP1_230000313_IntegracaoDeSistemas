@@ -32,3 +32,5 @@ services:
       - "5002:5002"
     volumes:
       - ./Servidor/XML:/app/XML
+
+  

@@ -86,5 +86,4 @@ def soap_service():
         return Response(fault_xml, status=400, mimetype="text/xml")
 
 if __name__ == '__main__':
-    print("Servidor SOAP rodando em http://127.0.0.1:5000/soap")
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(port=5000)

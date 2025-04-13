@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir flask requests
 
 EXPOSE 5000
 
-CMD ["python", "soap_app.py"]
+CMD ["python", "servidor_SOAP.py"]

@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir flask flask-restful requests
 
 EXPOSE 5001
 
-CMD ["python", "rest_app.py"]
+CMD ["python", "servidor_REST.py"]

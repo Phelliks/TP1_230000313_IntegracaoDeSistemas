@@ -43,9 +43,11 @@ cd "Nome do repositorio"
 ```
 
 ### 3. Fazer build e iniciar os serviços com o docker
+**O ```--build``` apenas tem de ser feito na primeira vez após isso já não é preciso**
 ```bash
 sudo docker-compose up --build
 ```
+
 
 **⚠️Os serviços arrancam automaticamente e ficam disponíveis nas seguintes portas:⚠️**
 
@@ -57,7 +59,11 @@ sudo docker-compose up --build
 | GraphQL | 4000 |
 
 ### 4. Iniciar o cliente
-Visto que o cliente está fora do docker para ele ser iniciado temos de fazer o seguinte comando:
+Visto que o cliente está fora do docker temos de instalar as dependencias para ele poder ser iniciado.
+```bash
+pip install -r Servidor\Dependencias.txt <- se estivermos no root do projeto senão este terá de ser modificado
+```
+Depois para o inicar temos de fazer o seguinte comando:
 ```bash
 cd Cliente
 python cliente.py

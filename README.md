@@ -60,5 +60,5 @@ python cliente.py
 ### 4.5. Se os teus serviços e o teu cliente tiverem em máquinas separadas tens de fazer este passo ❗❗❗
 Se os serviços estão separados temos primeiro de descobrir qual é o endereço de IP da maquina que tem os serviços.
 Após isso temos de entrar no **cliente.py** onde no começo teremos de alterar de localhost para o endereço da maquina que tem os serviços:
-![image]([https://github.com/user-attachments/assets/0c1791f8-365e-4ffd-9e92-fe562992de6d](https://media.discordapp.net/attachments/1213526643591872565/1361366251523277004/image.png?ex=67fe7e9f&is=67fd2d1f&hm=dae733d072a543e504754c9a99eb23b800fc09988b79ab80f45e9e8ed387274d&=))
+![image](https://media.discordapp.net/attachments/1213526643591872565/1361366251523277004/image.png?ex=67fe7e9f&is=67fd2d1f&hm=dae733d072a543e504754c9a99eb23b800fc09988b79ab80f45e9e8ed387274d&=)
  

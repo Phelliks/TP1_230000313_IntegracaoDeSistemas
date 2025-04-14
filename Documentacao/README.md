@@ -75,6 +75,6 @@ Depois disso, é necessário editar o **cliente.py**, onde no início será nece
 
 ![image](https://media.discordapp.net/attachments/1213526643591872565/1361366251523277004/image.png?ex=67fe7e9f&is=67fd2d1f&hm=dae733d072a543e504754c9a99eb23b800fc09988b79ab80f45e9e8ed387274d&=)
 
-## 👨‍💻 Autores
+# 👨‍💻 Autor
 - Ricardo Félix da Silva
 - Instituto politécnico de Santarém - Unidade Curricular de Integração de Sistemas

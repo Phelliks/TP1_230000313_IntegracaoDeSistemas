@@ -69,7 +69,7 @@ book_schema = {
 
 Os demais serviços não realizam validação ativa:
 
-- SOAP espera que os dados estejam corretos conforme o XSD, mas não rejeita entradas automaticamente.
+- SOAP espera que os dados estejam corretos, mas não rejeita entradas automaticamente.
 - gRPC trabalha com tipos definidos no .proto, o que garante uma validação básica ao nível do tipo.
 - GraphQL também aplica uma validação leve via o tipo definido no schema GraphQL, mas não valida regras de negócio.
 

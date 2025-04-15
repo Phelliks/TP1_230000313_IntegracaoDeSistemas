@@ -1,13 +1,15 @@
+# Importação das bibliotecas necessárias
 import os
 import xml.etree.ElementTree as ET
 from flask import Flask, request, jsonify
 from flask_restful import Api, Resource
 from jsonschema import validate, ValidationError
 
+# Configuração inicial do Flask e Flask-RESTful
 app = Flask(__name__)
 api = Api(app)
 
-# JSON Schema para validação de livros
+# Definição do schema JSON para validação de entrada
 book_schema = {
     "type": "object",
     "properties": {
@@ -18,9 +20,10 @@ book_schema = {
     "required": ["nome", "autor", "preco"]
 }
 
-# Caminho do arquivo XML para persistência
-XML_FILE_PATH = XML_FILE_PATH = "/data/livros.xml"
+# Configuração do caminho do arquivo XML
+XML_FILE_PATH = "/data/livros.xml"
 
+# Funções auxiliares para manipulação do XML
 def inicializar_xml():
     """Cria o diretório e o arquivo XML com a raiz <livros> se não existirem."""
     xml_dir = os.path.dirname(XML_FILE_PATH)
@@ -35,6 +38,8 @@ def adicionar_livro_xml(nome, autor, preco):
     inicializar_xml()
     tree = ET.parse(XML_FILE_PATH)
     root = tree.getroot()
+    
+    # Criação da estrutura do elemento livro
     livro_elem = ET.Element("livro")
     ET.SubElement(livro_elem, "nome").text = nome
     ET.SubElement(livro_elem, "autor").text = autor
@@ -42,7 +47,7 @@ def adicionar_livro_xml(nome, autor, preco):
     root.append(livro_elem)
     tree.write(XML_FILE_PATH, encoding="utf-8", xml_declaration=True)
 
-# Recurso RESTful para inserir livros
+# Definição do recurso RESTful para operações com livros
 class LivroResource(Resource):
     def post(self):
         """
@@ -59,8 +64,10 @@ class LivroResource(Resource):
         except Exception as e:
             return {"erro": f"Erro inesperado: {str(e)}"}, 500
 
+# Registro do recurso na API
 api.add_resource(LivroResource, '/REST')
 
+# Inicialização do servidor
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 

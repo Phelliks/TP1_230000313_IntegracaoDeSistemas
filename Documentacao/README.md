@@ -26,7 +26,7 @@ O sistema foi desenvolvido em Python, com os serviços implementados em contento
 - Graphene (GraphQL)
 - Docker e Docker Compose
 
-## 📦 Estrutura do Repositório
+## 📦 Estrutura do projeto
 
 ```
 /

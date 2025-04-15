@@ -44,15 +44,14 @@ O sistema foi desenvolvido em Python, com os serviços implementados em contento
 ```
 ## 📌 Endpoints e Serviços
 Cada tecnologia utilizada disponibiliza uma das operações CRUD para o recurso `livro`:
-| Serviço | Utilização |
-| --- | --- |
-| REST | É usado para fazer as ações de CREATE (inserir livros) |
-| SOAP | É usado para fazer as ações de UPDATE (atualizar livros) |
-| gRPC | É usado para fazer as ações de READ (ler/consultar livros) |
-| GraphQL | É usado para fazer as ações de DELETE (remover livros) |
+| Serviço | Porta | Função | 
+|--------|--------|--------|
+| **REST** | `5001` | **Criar Livro** | 
+| **SOAP** | `8000` | **Atualizar Livro** | 
+| **gRPC** | `50051` | **Consultar Livros** |
+| **GraphQL** | `4000` | **Remover Livro** |
 
 ### 🧪 Esquemas de Validação
-Neste caso apenas o Rest tem validação porque é o unico que realmente insere
 #### REST (JSON Schema) está no código
 ```
 # Definição do schema JSON para validação de entrada
@@ -66,6 +65,13 @@ book_schema = {
     "required": ["nome", "autor", "preco"]
 }
 ```
+📎 SOAP, gRPC e GraphQL
+
+Os demais serviços não realizam validação ativa:
+
+- SOAP espera que os dados estejam corretos conforme o XSD, mas não rejeita entradas automaticamente.
+- gRPC trabalha com tipos definidos no .proto, o que garante uma validação básica ao nível do tipo.
+- GraphQL também aplica uma validação leve via o tipo definido no schema GraphQL, mas não valida regras de negócio.
 
 ## 🚀 Como Correr
 **⚠️⚠️ Se estiver a instalar no ubuntu server pode ser necessário usar o sudo antes dos comandos ⚠️⚠️**
